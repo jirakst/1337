@@ -1,3 +1,5 @@
+PROJECT DESCRIPTION:
+
 1) A detailed description of the multi-agent system, including the agents' architecture, abilities, and behaviors:
 
 There are currently two agents operating in a grid environment called 'TheWorld.' Each agent has a shared policy network, a communication module, and a set of collected resources. The shared policy network is a simple neural network with two hidden layers, taking in the agent's state as input and producing action probabilities as output. The communication module is another neural network that processes the communication state, which includes the agent's position, resource positions, and information about collected resources, to generate messages for other agents.
