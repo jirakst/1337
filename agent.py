@@ -11,7 +11,12 @@ class Agent(torch.nn.Module):
         self.action_space = action_space
         self.communication = Communication(comm_input_size, comm_output_size)
         self.collected_resources = set()
-        self.epsilon = epsilon        
+        self.epsilon = epsilon 
+
+        # Define Q-learning hyper-parameters
+        self.gamma = 0.9
+        self.alpha = 0.1
+        self.Q = np.zeros((1, 5))  # TODO: Make this dynamic/scalable       
 
     def forward(self, state):
         return self.policy_net(state)
@@ -45,6 +50,9 @@ class Agent(torch.nn.Module):
     def receive_message(self, message):
         collected_resource = torch.argmax(message).item()
         self.collected_resources.add(collected_resource)
+
+    def update_Q(self, state, action, next_state, reward):
+        self.Q[state, action] += self.alpha * (reward + self.gamma * np.max(self.Q[next_state, :]) - self.Q[state, action])
     
 class Communication(nn.Module):
     def __init__(self, input_size, output_size):
@@ -56,7 +64,6 @@ class Communication(nn.Module):
         x = torch.relu(self.fc1(x))
         x = torch.sigmoid(self.fc2(x))
         return x
-
  
 def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, max_steps_per_episode=10):
 
@@ -86,6 +93,7 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
                     agent_state_tensor = torch.tensor(agent_state, dtype=torch.float32).view(1, -1)
                     action = agent.action(agent_state_tensor)
                     actions_timestep.append(action)
+                    agent.update_Q(state, action, next_state, rewards_timestep)
                 else:
                     actions_timestep.append(None)
 

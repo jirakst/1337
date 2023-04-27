@@ -3,6 +3,9 @@ import gym
 from gym import spaces
 import numpy as np
 
+# Define the payoff matrix
+payoff_matrix = np.array([[10, -10], [-10, 10]])
+
 class TheWorld(gym.Env):
     def __init__(self, width, height, num_agents, num_resources):
         super(TheWorld, self).__init__()
@@ -19,7 +22,7 @@ class TheWorld(gym.Env):
             spaces.Tuple([spaces.Discrete(width), spaces.Discrete(height)] * num_resources)  # Resources' positions
         ])
 
-        # Action space: 0 - Up, 1 - Down, 2 - Left, 3 - Right, 4 - Collected resource
+        # Action space: 0 - Up, 1 - Down, 2 - Left, 3 - Right, 4 - Collect resource
         self.action_space = spaces.Discrete(5)
 
         self.reset()
@@ -55,9 +58,9 @@ class TheWorld(gym.Env):
             if action == 4:
                 for r, resource_pos in enumerate(self.resource_positions):
                     if self.agent_positions[i] == resource_pos:
-                        rewards[i] += 1
                         collected_resources[i] += 1
-                        self.resource_positions[r] = (-1, -1)  # Set the collected resource's position to an invalid position
+                        self.resource_positions[r] = (-1, -1)  # Invalidate collected resource's position
+                        rewards[i] += payoff_matrix[i, r]
 
         # Update 'done' status based on the position
         '''
