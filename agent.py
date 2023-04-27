@@ -122,7 +122,8 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
             state = next_state
 
             print(f'Episode {episode}: Update the state done')
-
+            
+            # Update step counter
             i += 1
 
             # Terminal condition
