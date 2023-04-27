@@ -53,7 +53,7 @@ class Communication(nn.Module):
         return x
 
  
-def train(agents, shared_policy_net, env, num_episodes=1000, render_interval=1):
+def train(agents, shared_policy_net, env, num_episodes=100, render_interval=100, max_steps_per_episode=10):
 
     optimizer = optim.Adam(shared_policy_net.parameters())
 
@@ -126,6 +126,11 @@ def train(agents, shared_policy_net, env, num_episodes=1000, render_interval=1):
 
             i += 1
 
+            # Terminal condition
+            if i >= max_steps_per_episode:
+                print('Maximum steps per episode reached!')
+                break
+
         episode += 1
 
         # Compute reward-to-go
@@ -155,3 +160,6 @@ def train(agents, shared_policy_net, env, num_episodes=1000, render_interval=1):
 
         loss.backward()
         optimizer.step()
+
+    if episode >= num_episodes:
+        print('/nMaximum number of episodes reached!')
