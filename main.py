@@ -26,7 +26,7 @@ def main():
     comm_input_size = 2 + 2 * num_resources + 1
 
     # Create the agents
-    agents = [Agent(shared_policy_net, env.observation_space, env.action_space, comm_output_size, comm_input_size) for _ in range(num_agents)]
+    agents = [Agent(shared_policy_net, env.observation_space, env.action_space, comm_output_size, comm_input_size, epsilon=0.6) for _ in range(num_agents)]
 
     # Train the agents
     agent.train(agents, shared_policy_net, env)

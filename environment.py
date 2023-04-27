@@ -59,7 +59,12 @@ class TheWorld(gym.Env):
                         collected_resources[i] += 1
                         self.resource_positions[r] = (-1, -1)  # Set the collected resource's position to an invalid position
 
-        # Check for done agents
+        # Update 'done' status based on the position
+        '''
+        # Update 'done' status based on the collected resources
+        if collected_resources[i] >= self.num_resources:
+            dones[i] = True
+        '''
         for i, agent_pos in enumerate(self.agent_positions):
             if agent_pos in self.resource_positions:
                 dones[i] = True
