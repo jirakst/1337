@@ -53,13 +53,12 @@ class Communication(nn.Module):
         return x
 
  
-def train(agents, shared_policy_net, env, num_episodes=100, render_interval=100, max_steps_per_episode=10):
+def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, max_steps_per_episode=10):
 
     optimizer = optim.Adam(shared_policy_net.parameters())
 
     for episode in range(num_episodes):
         state = env.reset()
-
         states, actions, rewards = [], [], []
         done = [False] * len(agents)
 
@@ -161,5 +160,9 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=100,
         loss.backward()
         optimizer.step()
 
+    # Annouce either termination or success
     if episode >= num_episodes:
-        print('/nMaximum number of episodes reached!')
+        print(f'\nMAXIMUM NUMBER OF {num_episodes} EPISODES REACHED! :-(')
+    else:
+        print('\n\nCONGRATULATIONS! \nResources have been sucessfully collected!')
+        print(f'\nIt took {episode} episodes.')
