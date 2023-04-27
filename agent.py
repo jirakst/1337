@@ -1,17 +1,17 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from gym import spaces
-
+import numpy as np
 
 class Agent(torch.nn.Module):
-    def __init__(self, policy_net, observation_space, action_space, comm_output_size, comm_input_size):
+    def __init__(self, policy_net, observation_space, action_space, comm_output_size, comm_input_size, epsilon):
         super().__init__()
         self.policy_net = policy_net
         self.observation_space = observation_space
         self.action_space = action_space
         self.communication = Communication(comm_input_size, comm_output_size)
         self.collected_resources = set()
+        self.epsilon = epsilon        
 
     def forward(self, state):
         return self.policy_net(state)
@@ -22,6 +22,12 @@ class Agent(torch.nn.Module):
             probs = torch.softmax(logits, dim=-1)
 
             #TODO: Process the interaction
+
+            # Epsilon-greedy exploration
+            if np.random.random() < self.epsilon:  # Exploration
+                action = torch.tensor([np.random.choice(self.action_space.n)], dtype=torch.long)
+            else:  # Exploitation
+                action = torch.argmax(probs, dim=-1)
 
             action = torch.multinomial(probs, num_samples=1)
         return action
@@ -40,7 +46,6 @@ class Agent(torch.nn.Module):
         collected_resource = torch.argmax(message).item()
         self.collected_resources.add(collected_resource)
     
-
 class Communication(nn.Module):
     def __init__(self, input_size, output_size):
         super(Communication, self).__init__()
@@ -64,7 +69,7 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
 
         # Render the environment and print the full state
         if episode % render_interval == 0:
-            print(f"Episode {episode}")
+            print(f"\nEpisode {episode}")
             env.render()
             print("Full state:", env.get_full_state())
 
@@ -72,7 +77,6 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
 
         # Iterate until all agents meet the objective
         while not all(done):
-            print(f'Iteration {i}:')
             # Sample action for each agent
             actions_timestep = []
             actions_timestep = []
@@ -84,8 +88,6 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
                     actions_timestep.append(action)
                 else:
                     actions_timestep.append(None)
-
-            print(f'Episode {episode}: Actions: {actions_timestep}')
 
             # Step the environment with the chosen actions
             next_state, rewards_timestep, done, info, collected_resources = env.step(actions_timestep)
@@ -103,16 +105,8 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
                 communication_state = list(agent_position) + [pos for resource_position in resources_positions for pos in resource_position] + [collected_resources[agent_idx]]  # TODO: Revise this harakiri
                 communication_states.append(list(communication_state))
 
-            print(f'Episode {episode}: Communication states: {communication_states}')
-
             # Communicate the message between agents
             Agent.exchange_messages(agents, communication_states)
-
-            print(f'Episode {episode}: Rewards: {rewards_timestep}, Done: {done}, Info: {info}')
-            print(f"State: {state}")
-            print(f"Next State: {next_state}")
-
-            print(f'Done values: {done}') 
 
             # Store state, action, and reward information for training
             states.append(state)
@@ -120,14 +114,13 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
             rewards.append(rewards_timestep)
 
             state = next_state
-
-            print(f'Episode {episode}: Update the state done')
-
+            
+            # Update step counter
             i += 1
 
             # Terminal condition
             if i >= max_steps_per_episode:
-                print('Maximum steps per episode reached!')
+                print('\nMaximum steps per episode reached!')
                 break
 
         episode += 1
@@ -141,8 +134,6 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
                     rewards_to_go[i][agent_idx] = rewards[i][agent_idx]
                 else:
                     rewards_to_go[i][agent_idx] = rewards[i][agent_idx] + rewards_to_go[i + 1][agent_idx]
-
-        print('Compute the reward done')
 
         # Compute the loss and update the policy network
         optimizer.zero_grad()
@@ -162,7 +153,7 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
 
     # Annouce either termination or success
     if episode >= num_episodes:
-        print(f'\nMAXIMUM NUMBER OF {num_episodes} EPISODES REACHED! :-(')
+        print(f'\n\nMAXIMUM NUMBER OF {num_episodes} EPISODES REACHED!')
     else:
         print('\n\nCONGRATULATIONS! \nResources have been sucessfully collected!')
         print(f'\nIt took {episode} episodes.')
