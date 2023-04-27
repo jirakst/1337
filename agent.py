@@ -71,8 +71,8 @@ def train(agents, shared_policy_net, env, num_episodes=1000, render_interval=1):
 
         i = 0
 
-        # !!Infinite loop!!
-        while not all(done):  # Variable 'done' is never set to True for all agents!
+        # Iterate until all agents meet the objective
+        while not all(done):
             print(f'Iteration {i}:')
             # Sample action for each agent
             actions_timestep = []
@@ -89,7 +89,7 @@ def train(agents, shared_policy_net, env, num_episodes=1000, render_interval=1):
             print(f'Episode {episode}: Actions: {actions_timestep}')
 
             # Step the environment with the chosen actions
-            next_state, rewards_timestep, done, info, collected_resources = env.step(actions_timestep)  # This is gonna be the problem
+            next_state, rewards_timestep, done, info, collected_resources = env.step(actions_timestep)
 
             # Announce collected resources
             for agent_idx, collected in enumerate(collected_resources):
@@ -113,7 +113,7 @@ def train(agents, shared_policy_net, env, num_episodes=1000, render_interval=1):
             print(f"State: {state}")
             print(f"Next State: {next_state}")
 
-            print(f'Done values: {done}')  # !!!Done is not being updated correctly!!!
+            print(f'Done values: {done}') 
 
             # Store state, action, and reward information for training
             states.append(state)
