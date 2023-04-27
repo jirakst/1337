@@ -71,8 +71,8 @@ def train(agents, shared_policy_net, env, num_episodes=1000, render_interval=1):
 
         i = 0
 
-        # "HOTFIX"
-        while i < len(agents):  # not all(done):
+        # !!Infinite loop!!
+        while not all(done):  # variable 'done' is never set to True for all agents!
             print(f'Iteration {i}:')
             # Sample action for each agent
             actions_timestep = []
