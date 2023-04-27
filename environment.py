@@ -59,6 +59,11 @@ class TheWorld(gym.Env):
                         collected_resources[i] += 1
                         self.resource_positions[r] = (-1, -1)  # Set the collected resource's position to an invalid position
 
+        # Check for done agents
+        for i, agent_pos in enumerate(self.agent_positions):
+            if agent_pos in self.resource_positions:
+                dones[i] = True
+
         return self.get_full_state(), rewards, dones, infos, collected_resources
 
     def reset(self):

@@ -142,7 +142,8 @@ def train(agents, shared_policy_net, env, num_episodes=1000, render_interval=1):
 
         # Compute the loss and update the policy network
         optimizer.zero_grad()
-        loss = 0
+        loss = torch.tensor(0.0, dtype=torch.float32, requires_grad=True)
+
         for t in range(len(states)):
             for agent_idx, agent in enumerate(agents):
                 if not done[agent_idx]:  # Only compute loss for non-finished agents
