@@ -15,6 +15,8 @@ class TheWorld(gym.Env):
         self.num_agents = num_agents
         self.num_resources = num_resources
 
+        # TODO: Get the number of states for the Q-learning from the observation space, according to the formula: Q = (self.width * self.height) ** self.num_agents * (self.width * self.height) ** self.num_resources
+
         # Observation space: agent's x, y position, and a list of resources' x, y positions
         self.observation_space = spaces.Tuple([
             spaces.Discrete(width),  # Agent's x position

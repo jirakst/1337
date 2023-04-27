@@ -16,7 +16,7 @@ class Agent(torch.nn.Module):
         # Define Q-learning hyper-parameters
         self.gamma = 0.9
         self.alpha = 0.1
-        self.Q = np.zeros((1, 5))  # TODO: Make this dynamic/scalable       
+        self.Q = np.zeros((6561, 5))  # TODO: Make this dynamic/scalable       
 
     def forward(self, state):
         return self.policy_net(state)
@@ -82,11 +82,13 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
 
         i = 0
 
-        # Iterate until all agents meet the objective
+        # Sample action for each agent
+        actions_timestep = []
+
         while not all(done):
-            # Sample action for each agent
-            actions_timestep = []
-            actions_timestep = []
+            # Step the environment with the chosen actions
+            next_state, rewards_timestep, done, info, collected_resources = env.step(actions_timestep)
+
             for i, agent in enumerate(agents):
                 if not done[i]:
                     agent_state = (state[0], state[1], state[2+i*2], state[3+i*2])
@@ -96,9 +98,6 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
                     agent.update_Q(state, action, next_state, rewards_timestep)
                 else:
                     actions_timestep.append(None)
-
-            # Step the environment with the chosen actions
-            next_state, rewards_timestep, done, info, collected_resources = env.step(actions_timestep)
 
             # Announce collected resources
             for agent_idx, collected in enumerate(collected_resources):
@@ -122,7 +121,7 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
             rewards.append(rewards_timestep)
 
             state = next_state
-            
+
             # Update step counter
             i += 1
 

@@ -1,6 +1,5 @@
 import torch.nn as nn
-import environment as env
-from environment import TheWorld
+from environment import TheWorld, payoff_matrix
 import agent
 from agent import Agent
 import numpy as np
@@ -34,7 +33,6 @@ def main():
     agent.train(agents, shared_policy_net, env)
 
     # Evaluate against Nash Equilibrium
-    payoff_matrix = env.payoff_matrix
     game = nashpy.Game(payoff_matrix)
 
     nash_equilibria = game.support_enumeration()
