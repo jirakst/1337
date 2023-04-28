@@ -71,11 +71,11 @@ class TheWorld(gym.Env):
                 dones[i] = True
                 print(f'\nAgent {i} finished! Resources have been sucessfully collected!')
 
-            # Check if all resources have been collected by the agents
-            if all([pos == (-1, -1) for pos in self.resource_positions]):
-                dones = [True] * self.num_agents
-                print('\nCONGRATULATIONS! All resources have been sucessfully collected!')
-                print(f'\nSteps taken: {steps}')
+        # Check if all resources have been collected by the agents
+        if all([pos == (-1, -1) for pos in self.resource_positions]):
+            dones = [True] * self.num_agents
+            print('\nCONGRATULATIONS! All resources have been sucessfully collected!')
+            print(f'\nSteps taken: {steps}')
 
         return self.get_full_state(), rewards, dones, infos, collected_resources
 

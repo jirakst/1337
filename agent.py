@@ -70,6 +70,8 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
     # Create the optimizer
     optimizer = optim.Adam(shared_policy_net.parameters())
 
+    total_steps = 0
+
     for episode in range(num_episodes):
         state = env.reset()
         states, actions, rewards = [], [], []
@@ -84,7 +86,7 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
         # Reset the total collected resources
         total_collected_resources = [0] * len(agents)
 
-        i = 0
+        steps = 0
 
         # Iterate until all agents meet the terminal condition
         while not all(dones):  # sum(dones) < len(agents):
@@ -130,14 +132,13 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
             state = next_state
             
             # Update step counter
-            i += 1
+            steps += 1
+            total_steps += 1
 
             # Terminal condition
-            if i >= max_steps_per_episode:
+            if steps >= max_steps_per_episode:
                 print('\nMaximum steps per episode reached!')
                 break
-
-        episode += 1
 
         # Compute reward-to-go
         num_agents = len(agents)
@@ -169,12 +170,11 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
         # Check if all resources have been collected by the agents
         if all([pos == (-1, -1) for pos in env.resource_positions]):
             dones = [True] * len(agents)
-            break  # Add this line to break the loop when all resources have been collected
+            print(f"\nGlobal state after {episode + 1} episodes and {total_steps} steps:")
+            for agent_idx, collected in enumerate(total_collected_resources):
+                print(f"Agent {agent_idx} collected {collected} resources")
+            break 
 
     # Check either for the termination
     if episode >= num_episodes:
         print(f'\n\nMAXIMUM NUMBER OF {num_episodes} EPISODES REACHED!')
-    else:
-        print(f"Global state after {episode} episodes and {i} steps:")
-        for agent_idx, collected in enumerate(total_collected_resources):
-            print(f"Agent {agent_idx} collected {collected} resources")
