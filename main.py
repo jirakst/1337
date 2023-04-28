@@ -8,8 +8,8 @@ import nashpy
 def main():
     width = 3
     height = 3
-    num_agents = 1
-    num_resources = 1
+    num_agents = 2
+    num_resources = 2
     comm_output_size = 3
 
     env = TheWorld(width, height, num_agents, num_resources)

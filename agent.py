@@ -65,17 +65,19 @@ class Communication(nn.Module):
         return x
 
  
-def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, max_steps_per_episode=3):
+def train(agents, shared_policy_net, env, num_episodes=1000, render_interval=10, max_steps_per_episode=5):
 
     # Create the optimizer
     optimizer = optim.Adam(shared_policy_net.parameters())
 
     total_steps = 0
 
+    dones = [False] * len(agents)
+
     for episode in range(num_episodes):
         state = env.reset()
         states, actions, rewards = [], [], []
-        dones = [False] * len(agents)
+        
 
         # Render the environment and print the full state
         if episode % render_interval == 0:
@@ -112,6 +114,11 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
                 if collected:
                     total_collected_resources[agent_idx] += collected
                     print(f'\nAgent {agent_idx} collected a resource!')
+
+            # Update dones list for agents who collected all resources
+            for agent_idx, collected_resources_count in enumerate(total_collected_resources):
+                if collected_resources_count == len(env.resource_positions):
+                    dones[agent_idx] = True
 
             # Get agent/resource position
             communication_states = []
@@ -175,6 +182,10 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
                 print(f"Agent {agent_idx} collected {collected} resources")
             break 
 
-    # Check either for the termination
-    if episode >= num_episodes:
-        print(f'\n\nMAXIMUM NUMBER OF {num_episodes} EPISODES REACHED!')
+        # Check either for the termination
+        if episode >= num_episodes:
+            print(f'\n\nMAXIMUM NUMBER OF {num_episodes} EPISODES REACHED!')
+            print(f"\nGlobal state after {episode + 1} episodes and {total_steps} total steps:")
+            for agent_idx, collected in enumerate(total_collected_resources):
+                print(f"Agent {agent_idx} collected {collected} resources")
+            break
