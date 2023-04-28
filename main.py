@@ -10,7 +10,7 @@ def main():
     height = 3
     num_agents = 2
     num_resources = 2
-    comm_output_size = 3
+    comm_output_size = num_resources
 
     env = TheWorld(width, height, num_agents, num_resources)
 
@@ -24,7 +24,7 @@ def main():
     )
 
     # TODO: Calculate the inpute size dynamically
-    comm_input_size = 2 + 2 * num_resources + 1
+    comm_input_size = 2 + 2 * num_resources # + 1
 
     # Create the agents
     agents = [Agent(shared_policy_net, env.observation_space, env.action_space, comm_output_size, comm_input_size, epsilon=0.6) for _ in range(num_agents)] 
