@@ -16,12 +16,27 @@ class Agent(torch.nn.Module):
     def forward(self, state):
         return self.policy_net(state)
 
-    def action(self, state):
+    def action(self, state, messages):  # Updated method signature
         with torch.no_grad():
             logits = self.forward(state)
             probs = torch.softmax(logits, dim=-1)
 
-            #TODO: Process the interaction
+            '''
+            # Penalize actions that lead to positions with collected resources
+            for collected_resource in self.collected_resources:
+                x, y = messages[collected_resource]
+                if (x, y) == (state[0], state[1] + 1):  # Up
+                    logits[0, 0] -= 1e6
+                if (x, y) == (state[0], state[1] - 1):  # Down
+                    logits[0, 1] -= 1e6
+                if (x, y) == (state[0] - 1, state[1]):  # Left
+                    logits[0, 2] -= 1e6
+                if (x, y) == (state[0] + 1, state[1]):  # Right
+                    logits[0, 3] -= 1e6
+            '''
+
+            # Update the probabilities after penalizing
+            probs = torch.softmax(logits, dim=-1)
 
             # Epsilon-greedy exploration
             if np.random.random() < self.epsilon:  # Exploration
@@ -77,7 +92,6 @@ def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10,
     for episode in range(num_episodes):
         state = env.reset()
         states, actions, rewards = [], [], []
-        
 
         # Render the environment and print the full state
         if episode % render_interval == 0:
@@ -90,6 +104,14 @@ def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10,
 
         steps = 0
 
+        # Initialize the communication_states
+        communication_states = []
+        for agent_idx, agent in enumerate(agents):
+            agent_position = state[agent_idx * 2: (agent_idx * 2) + 2]
+            resources_positions = [state[i:i + 2] for i in range(2 * len(agents), len(state), 2)]
+            communication_state = list(agent_position) + [pos for resource_position in resources_positions for pos in resource_position]
+            communication_states.append(list(communication_state))
+
         # Iterate until all agents meet the terminal condition
         while not all(dones):  # sum(dones) < len(agents):
             # Sample action for each agent
@@ -98,7 +120,9 @@ def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10,
                 if not dones[i]:
                     agent_state = (state[0], state[1], state[2+i*2], state[3+i*2])
                     agent_state_tensor = torch.tensor(agent_state, dtype=torch.float32).view(1, -1)
-                    action = agent.action(agent_state_tensor)
+                    communication_state = communication_states[i]
+                    messages = agent.communicate(communication_state)  # Compute messages for the agent
+                    action = agent.action(agent_state_tensor, messages)
                     actions_timestep.append(action)
                 else:
                     actions_timestep.append(None)
@@ -124,14 +148,6 @@ def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10,
             if all([collected == len(env.resource_positions) for collected in total_collected_resources]):
                 print("All resources have been collected!")
                 break
-
-            # Get agent/resource position
-            communication_states = []
-            for agent_idx, agent in enumerate(agents):
-                agent_position = next_state[agent_idx * 2: (agent_idx * 2) + 2]
-                resources_positions = [next_state[i:i + 2] for i in range(2 * len(agents), len(next_state), 2)]
-                communication_state = list(agent_position) + [pos for resource_position in resources_positions for pos in resource_position] + [collected_resources[agent_idx]]  # TODO: Revise this harakiri
-                communication_states.append(list(communication_state))
 
             # Communicate the message between agents
             Agent.exchange_messages(agents, communication_states)
