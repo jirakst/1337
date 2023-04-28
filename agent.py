@@ -111,7 +111,7 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
             for agent_idx, collected in enumerate(collected_resources):
                 if collected:
                     total_collected_resources[agent_idx] += collected
-                    print(f'Agent {agent_idx} collected a resource!')
+                    print(f'\nAgent {agent_idx} collected a resource!')
 
             # Get agent/resource position
             communication_states = []
@@ -137,7 +137,7 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
 
             # Terminal condition
             if steps >= max_steps_per_episode:
-                print('\nMaximum steps per episode reached!')
+                # print('\nMaximum steps per episode reached!')
                 break
 
         # Compute reward-to-go
@@ -170,7 +170,7 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
         # Check if all resources have been collected by the agents
         if all([pos == (-1, -1) for pos in env.resource_positions]):
             dones = [True] * len(agents)
-            print(f"\nGlobal state after {episode + 1} episodes and {total_steps} steps:")
+            print(f"\nGlobal state after {episode + 1} episodes and {total_steps} total steps:")
             for agent_idx, collected in enumerate(total_collected_resources):
                 print(f"Agent {agent_idx} collected {collected} resources")
             break 
