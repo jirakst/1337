@@ -65,7 +65,7 @@ class Communication(nn.Module):
         return x
 
  
-def train(agents, shared_policy_net, env, num_episodes=1000, render_interval=10, max_steps_per_episode=5):
+def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10, max_steps_per_episode=5):
 
     # Create the optimizer
     optimizer = optim.Adam(shared_policy_net.parameters())
@@ -113,12 +113,17 @@ def train(agents, shared_policy_net, env, num_episodes=1000, render_interval=10,
             for agent_idx, collected in enumerate(collected_resources):
                 if collected:
                     total_collected_resources[agent_idx] += collected
-                    print(f'\nAgent {agent_idx} collected a resource!')
+                    # print(f'\nAgent {agent_idx} collected a resource!')
 
             # Update dones list for agents who collected all resources
             for agent_idx, collected_resources_count in enumerate(total_collected_resources):
                 if collected_resources_count == len(env.resource_positions):
                     dones[agent_idx] = True
+
+            # Check if all resources have been collected and break the loop  # This is redudant
+            if all([collected == len(env.resource_positions) for collected in total_collected_resources]):
+                print("All resources have been collected!")
+                break
 
             # Get agent/resource position
             communication_states = []
