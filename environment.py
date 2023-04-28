@@ -40,7 +40,14 @@ class TheWorld(gym.Env):
         infos = [{}] * self.num_agents
         collected_resources = [0] * self.num_agents
 
+        steps = 0
+
         for i, action in enumerate(actions):
+            if action is None:
+                continue
+
+            steps += 1
+
             # Update agent position based on the action taken
             if action == 0:  # Up
                 self.agent_positions[i] = (self.agent_positions[i][0], min(self.height - 1, self.agent_positions[i][1] + 1))
@@ -59,15 +66,16 @@ class TheWorld(gym.Env):
                         collected_resources[i] += 1
                         self.resource_positions[r] = (-1, -1)  # Set the collected resource's position to an invalid position
 
-        # Update 'done' status based on the position
-        '''
-        # Update 'done' status based on the collected resources
-        if collected_resources[i] >= self.num_resources:
-            dones[i] = True
-        '''
-        for i, agent_pos in enumerate(self.agent_positions):
-            if agent_pos in self.resource_positions:
+            # Update 'done' status based on the position
+            if action == 4 and self.agent_positions[i] in self.resource_positions:
                 dones[i] = True
+                print(f'\nAgent {i} finished! Resources have been sucessfully collected!')
+
+            # Check if all resources have been collected by the agents
+            if all([pos == (-1, -1) for pos in self.resource_positions]):
+                dones = [True] * self.num_agents
+                print('\nCONGRATULATIONS! All resources have been sucessfully collected!')
+                print(f'\nSteps taken: {steps}')
 
         return self.get_full_state(), rewards, dones, infos, collected_resources
 

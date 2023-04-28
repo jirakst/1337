@@ -30,7 +30,14 @@ class Agent(torch.nn.Module):
                 action = torch.argmax(probs, dim=-1)
 
             action = torch.multinomial(probs, num_samples=1)
-        return action
+        return action.item()
+
+    def reward_function(self, collected_resources):
+        reward = 0
+        for resource_collected in collected_resources:
+            if resource_collected:
+                reward += 1
+        return reward
     
     def communicate(self, communication_state):
         communication_state_tensor = torch.tensor(communication_state, dtype=torch.float32).view(1, -1)
@@ -58,14 +65,15 @@ class Communication(nn.Module):
         return x
 
  
-def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, max_steps_per_episode=10):
+def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, max_steps_per_episode=3):
 
+    # Create the optimizer
     optimizer = optim.Adam(shared_policy_net.parameters())
 
     for episode in range(num_episodes):
         state = env.reset()
         states, actions, rewards = [], [], []
-        done = [False] * len(agents)
+        dones = [False] * len(agents)
 
         # Render the environment and print the full state
         if episode % render_interval == 0:
@@ -73,15 +81,17 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
             env.render()
             print("Full state:", env.get_full_state())
 
+        # Reset the total collected resources
+        total_collected_resources = [0] * len(agents)
+
         i = 0
 
-        # Iterate until all agents meet the objective
-        while not all(done):
+        # Iterate until all agents meet the terminal condition
+        while not all(dones):  # sum(dones) < len(agents):
             # Sample action for each agent
             actions_timestep = []
-            actions_timestep = []
             for i, agent in enumerate(agents):
-                if not done[i]:
+                if not dones[i]:
                     agent_state = (state[0], state[1], state[2+i*2], state[3+i*2])
                     agent_state_tensor = torch.tensor(agent_state, dtype=torch.float32).view(1, -1)
                     action = agent.action(agent_state_tensor)
@@ -90,11 +100,15 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
                     actions_timestep.append(None)
 
             # Step the environment with the chosen actions
-            next_state, rewards_timestep, done, info, collected_resources = env.step(actions_timestep)
+            next_state, rewards_timestep, dones, info, collected_resources = env.step(actions_timestep)
+
+            # Compute rewards based on the reward function
+            rewards_timestep = [agent.reward_function(collected_resources) for agent in agents]
 
             # Announce collected resources
             for agent_idx, collected in enumerate(collected_resources):
                 if collected:
+                    total_collected_resources[agent_idx] += collected
                     print(f'Agent {agent_idx} collected a resource!')
 
             # Get agent/resource position
@@ -141,19 +155,26 @@ def train(agents, shared_policy_net, env, num_episodes=100, render_interval=10, 
 
         for t in range(len(states)):
             for agent_idx, agent in enumerate(agents):
-                if not done[agent_idx]:  # Only compute loss for non-finished agents
+                if not dones[agent_idx]:  # Only compute loss for non-finished agents
                     agent_state = (states[t][0], states[t][1], states[t][2+agent_idx*2], states[t][3+agent_idx*2])
                     agent_state_tensor = torch.tensor(agent_state, dtype=torch.float32).view(1, -1)
                     logits = agent(agent_state_tensor)
                     log_probs = torch.log_softmax(logits, dim=-1)
-                    loss -= torch.gather(log_probs, 1, actions[t][agent_idx].view(1, 1)) * rewards_to_go[t][agent_idx]
+                    action_tensor = torch.tensor(actions[t][agent_idx], dtype=torch.long).view(1, 1)
+                    loss = loss - torch.gather(log_probs, 1, action_tensor) * rewards_to_go[t][agent_idx]
 
         loss.backward()
         optimizer.step()
+        
+        # Check if all resources have been collected by the agents
+        if all([pos == (-1, -1) for pos in env.resource_positions]):
+            dones = [True] * len(agents)
+            break  # Add this line to break the loop when all resources have been collected
 
-    # Annouce either termination or success
+    # Check either for the termination
     if episode >= num_episodes:
         print(f'\n\nMAXIMUM NUMBER OF {num_episodes} EPISODES REACHED!')
     else:
-        print('\n\nCONGRATULATIONS! \nResources have been sucessfully collected!')
-        print(f'\nIt took {episode} episodes.')
+        print(f"Global state after {episode} episodes and {i} steps:")
+        for agent_idx, collected in enumerate(total_collected_resources):
+            print(f"Agent {agent_idx} collected {collected} resources")
