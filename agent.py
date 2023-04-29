@@ -11,7 +11,15 @@ class Agent(torch.nn.Module):
         self.action_space = action_space
         self.communication = Communication(comm_input_size, comm_output_size)
         self.collected_resources = set()
-        self.epsilon = epsilon        
+        # Define epsilon hyperparameter for e-greedy
+        self.epsilon = epsilon  
+        # Define the  Q-learning hyperparametrs
+        self.learning_rate = 0.1
+        self.discount_factor = 0.9
+        # self.Q = np.zeros((observation_space, action_space.n))
+
+        # Initialize the Q-matrix
+        # self.Q = np.zeros((np.prod(observation_space.shape), action_space.n))   
 
     def forward(self, state):
         return self.policy_net(state)
@@ -20,6 +28,9 @@ class Agent(torch.nn.Module):
         with torch.no_grad():
             logits = self.forward(state)
             probs = torch.softmax(logits, dim=-1)
+
+            # Update the state to match the Q-matrix dimensions
+            # state = np.ravel_multi_index(tuple(state), self.observation_space.shape)  # This is actually taken care by the policy net   
 
             #TODO: Process the interaction
 
@@ -52,7 +63,11 @@ class Agent(torch.nn.Module):
     def receive_message(self, message):
         collected_resource = torch.argmax(message).item()
         self.collected_resources.add(collected_resource)
-    
+
+    # Update the Q-matrix
+    def update_Q(self, state, action, reward, next_state, next_action):
+        self.Q[state, action] += self.learning_rate * (reward + self.discount_factor * self.Q[next_state, next_action] - self.Q[state, action])
+
 class Communication(nn.Module):
     def __init__(self, input_size, output_size):
         super(Communication, self).__init__()
@@ -108,6 +123,9 @@ def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10,
 
             # Compute rewards based on the reward function
             rewards_timestep = [agent.reward_function(collected_resources) for agent in agents]
+
+            # Update the Q-values
+            # agent.update_Q(state, action, rewards_timestep, next_state, next_state)
 
             # Announce collected resources
             for agent_idx, collected in enumerate(collected_resources):
