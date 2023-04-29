@@ -35,7 +35,7 @@ def main():
     shared_policy_net = PolicyNetwork(input_size, hidden_size, output_size, env)
 
     # Create the agents
-    agents = [Agent(shared_policy_net, env.observation_space, env.action_space, comm_output_size, input_size, epsilon=0.6) for _ in range(num_agents)] 
+    agents = [Agent(shared_policy_net, env.observation_space, env.action_space, epsilon=0.6) for _ in range(num_agents)] 
 
     # Train the agents
     agent.train(agents, shared_policy_net, env)

@@ -1,17 +1,17 @@
+# Import modules
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 
 class Agent(torch.nn.Module):
-    def __init__(self, policy_net, observation_space, action_space, comm_output_size, comm_input_size, epsilon):
+    def __init__(self, policy_net, observation_space, action_space, epsilon):
         super().__init__()
         self.policy_net = policy_net
         self.observation_space = observation_space
         self.action_space = action_space
         self.collected_resources = set()
-        # Define epsilon hyperparameter for e-greedy
-        self.epsilon = epsilon  
+        self.epsilon = epsilon  # Define the hyperparameter for e-greedy
 
     def forward(self, state):
         return self.policy_net(state)
@@ -41,6 +41,7 @@ def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10,
 
     # Create the optimizer
     optimizer = optim.Adam(shared_policy_net.parameters())
+    # TODO: Set-up a scheduler for adaptive learning
 
     total_steps = 0
 
@@ -51,7 +52,7 @@ def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10,
         states, actions, rewards = [], [], []
         
 
-        # Render the environment and print the full state
+        # Render the environment
         if episode % render_interval == 0:
             print(f"\nEpisode {episode}")
             env.render()
@@ -63,7 +64,7 @@ def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10,
         steps = 0
 
         # Iterate until all agents meet the terminal condition
-        while not all(dones):  # sum(dones) < len(agents):
+        while not all(dones): 
             actions_timestep = []
             for i, agent in enumerate(agents):
                 if not dones[i]:
@@ -74,10 +75,10 @@ def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10,
                 else:
                     actions_timestep.append(None)
 
-            # Step the environment with the chosen actions
+            # Step the environment
             next_state, rewards_timestep, dones, info, collected_resources = env.step(actions_timestep)
 
-            # Compute rewards based on the reward function
+            # Compute rewards
             rewards_timestep = [agent.reward_function(collected_resources) for agent in agents]
 
             # Announce collected resources
@@ -90,13 +91,8 @@ def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10,
             for agent_idx, collected_resources_count in enumerate(total_collected_resources):
                 if collected_resources_count == len(env.resource_positions):
                     dones[agent_idx] = True
-
-            # Check if all resources have been collected and break the loop  # This is redudant
-            if all([collected == len(env.resource_positions) for collected in total_collected_resources]):
-                print("All resources have been collected!")
-                break
            
-            # Store state, action, and reward information for training
+            # Store state, action, and reward
             states.append(state)
             actions.append(actions_timestep)
             rewards.append(rewards_timestep)
@@ -139,7 +135,7 @@ def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10,
         loss.backward()
         optimizer.step()
         
-        # Check if all resources have been collected by the agents
+        # Check if all resources have been collected
         if all([pos == (-1, -1) for pos in env.resource_positions]):
             dones = [True] * len(agents)
             print(f"\nGlobal state after {episode + 1} episodes and {total_steps} total steps:")
@@ -147,7 +143,7 @@ def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10,
                 print(f"Agent {agent_idx} collected {collected} resources")
             break 
 
-        # Check either for the termination
+        # Check either for the limit termination
         if episode >= num_episodes:
             print(f'\n\nMAXIMUM NUMBER OF {num_episodes} EPISODES REACHED!')
             print(f"\nGlobal state after {episode + 1} episodes and {total_steps} total steps:")

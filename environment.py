@@ -1,4 +1,4 @@
-# environment.py
+# Import modules
 import gym
 from gym import spaces
 import numpy as np
@@ -17,14 +17,14 @@ class TheWorld(gym.Env):
         # Initialize shared memory for collected resources
         self.collected_resource_positions = np.zeros((height, width), dtype=bool)
 
-        # Observation space: agent's x, y position, and a list of resources' x, y positions
+        # Define the Oservation space
         self.observation_space = spaces.Tuple([
-            spaces.Discrete(width),  # Agent's x position
-            spaces.Discrete(height),  # Agent's y position
-            spaces.Tuple([spaces.Discrete(width), spaces.Discrete(height)] * num_resources)  # Resources' positions
+            spaces.Discrete(width), 
+            spaces.Discrete(height), 
+            spaces.Tuple([spaces.Discrete(width), spaces.Discrete(height)] * num_resources) 
         ])
 
-        # Action space: 0 - Up, 1 - Down, 2 - Left, 3 - Right, 4 - Collected resource
+        # Create the action space
         self.action_space = spaces.Discrete(5)
 
         self.reset()
@@ -53,7 +53,7 @@ class TheWorld(gym.Env):
 
             steps += 1
 
-            # Update agent position based on the action taken
+            # Define and update the action space
             if action == 0:  # Up
                 self.agent_positions[i] = (self.agent_positions[i][0], min(self.height - 1, self.agent_positions[i][1] + 1))
             elif action == 1:  # Down
@@ -63,20 +63,20 @@ class TheWorld(gym.Env):
             elif action == 3:  # Right
                 self.agent_positions[i] = (min(self.width - 1, self.agent_positions[i][0] + 1), self.agent_positions[i][1])
 
-            # Check for resource collection and handle the Collect resource action
+            # Check for resource collection
             if action == 4:
                 for r, resource_pos in enumerate(self.resource_positions):
                     if self.agent_positions[i] == resource_pos:
                         rewards[i] += 1
                         collected_resources[i] += 1
-                        self.resource_positions[r] = (-1, -1)  # Set the collected resource's position to an invalid position
+                        self.resource_positions[r] = (-1, -1)  # Invalid the collected resource's position
 
             # Update 'done' status based on the position
             if action == 4 and self.agent_positions[i] in self.resource_positions:
                 dones[i] = True
                 print(f'\nAgent {i} finished! Resources have been sucessfully collected!')
 
-        # Update the collected_resource_positions based on the collected resources
+        # Update the collected_resource_positions
         for resource_idx, resource_position in enumerate(self.resource_positions):
             if collected_resources[resource_idx]:
                 self.collected_resource_positions[resource_position] = True
