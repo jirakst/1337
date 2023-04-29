@@ -1,8 +1,8 @@
 # Import modules
-import torch
-import torch.nn as nn
-import torch.optim as optim
 import numpy as np
+import torch
+import torch.optim as optim
+from torch.optim.lr_scheduler import ExponentialLR
 
 class Agent(torch.nn.Module):
     def __init__(self, policy_net, observation_space, action_space, epsilon):
@@ -41,7 +41,9 @@ def train(agents, shared_policy_net, env, num_episodes, render_interval, max_ste
 
     # Create the optimizer
     optimizer = optim.Adam(shared_policy_net.parameters())
-    # TODO: Set-up a scheduler for adaptive learning
+    # Set-up a scheduler for adaptive learning
+    gamma = 0.6 
+    scheduler = ExponentialLR(optimizer, gamma=gamma)
 
     total_steps = 0
 
@@ -133,7 +135,7 @@ def train(agents, shared_policy_net, env, num_episodes, render_interval, max_ste
                     loss = loss - torch.gather(log_probs, 1, action_tensor) * rewards_to_go[t][agent_idx]
 
         loss.backward()
-        optimizer.step()
+        scheduler.step()
         
         # Check if all resources have been collected
         if all([pos == (-1, -1) for pos in env.resource_positions]):
