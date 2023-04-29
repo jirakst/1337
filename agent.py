@@ -9,17 +9,9 @@ class Agent(torch.nn.Module):
         self.policy_net = policy_net
         self.observation_space = observation_space
         self.action_space = action_space
-        # self.communication = Communication(comm_input_size, comm_output_size)
         self.collected_resources = set()
         # Define epsilon hyperparameter for e-greedy
         self.epsilon = epsilon  
-        # Define the  Q-learning hyperparametrs
-        self.learning_rate = 0.1
-        self.discount_factor = 0.9
-        # self.Q = np.zeros((observation_space, action_space.n))
-
-        # Initialize the Q-matrix
-        # self.Q = np.zeros((np.prod(observation_space.shape), action_space.n))   
 
     def forward(self, state):
         return self.policy_net(state)
@@ -28,11 +20,6 @@ class Agent(torch.nn.Module):
         with torch.no_grad():
             logits = self.forward(state)
             probs = torch.softmax(logits, dim=-1)
-
-            # Update the state to match the Q-matrix dimensions
-            # state = np.ravel_multi_index(tuple(state), self.observation_space.shape)  # This is actually taken care by the policy net   
-
-            #TODO: Process the interaction
 
             # Epsilon-greedy exploration
             if np.random.random() < self.epsilon:  # Exploration
@@ -49,36 +36,6 @@ class Agent(torch.nn.Module):
             if resource_collected:
                 reward += 1
         return reward
-    '''
-    def communicate(self, communication_state):
-        communication_state_tensor = torch.tensor(communication_state, dtype=torch.float32).view(1, -1)
-        message = self.communication(communication_state_tensor)
-        return message
-    
-    def exchange_messages(agents, communication_states):
-        messages = [agent.communicate(comm_state) for agent, comm_state in zip(agents, communication_states)]
-        for agent, message in zip(agents, messages):
-            agent.receive_message(message)
-
-    def receive_message(self, message):
-        collected_resource = torch.argmax(message).item()
-        self.collected_resources.add(collected_resource)
-
-    # Update the Q-matrix
-    def update_Q(self, state, action, reward, next_state, next_action):
-        self.Q[state, action] += self.learning_rate * (reward + self.discount_factor * self.Q[next_state, next_action] - self.Q[state, action])
-
-class Communication(nn.Module):
-    def __init__(self, input_size, output_size):
-        super(Communication, self).__init__()
-        self.fc1 = nn.Linear(input_size, 64)
-        self.fc2 = nn.Linear(64, output_size)
-
-    def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        x = torch.sigmoid(self.fc2(x))
-        return x
-    '''
  
 def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10, max_steps_per_episode=5):
 
@@ -123,9 +80,6 @@ def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10,
             # Compute rewards based on the reward function
             rewards_timestep = [agent.reward_function(collected_resources) for agent in agents]
 
-            # Update the Q-values
-            # agent.update_Q(state, action, rewards_timestep, next_state, next_state)
-
             # Announce collected resources
             for agent_idx, collected in enumerate(collected_resources):
                 if collected:
@@ -141,18 +95,7 @@ def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10,
             if all([collected == len(env.resource_positions) for collected in total_collected_resources]):
                 print("All resources have been collected!")
                 break
-            '''
-            # Get agent/resource position
-            communication_states = []
-            for agent_idx, agent in enumerate(agents):
-                agent_position = next_state[agent_idx * 2: (agent_idx * 2) + 2]
-                resources_positions = [next_state[i:i + 2] for i in range(2 * len(agents), len(next_state), 2)]
-                communication_state = list(agent_position) + [pos for resource_position in resources_positions for pos in resource_position] + [collected_resources[agent_idx]]  # TODO: Revise this harakiri
-                communication_states.append(list(communication_state))
-
-            # Communicate the message between agents
-            # Agent.exchange_messages(agents, communication_states)
-            '''
+           
             # Store state, action, and reward information for training
             states.append(state)
             actions.append(actions_timestep)
