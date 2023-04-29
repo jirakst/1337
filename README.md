@@ -4,7 +4,7 @@ PROJECT DESCRIPTION:
 
 The multi-agent system is designed to simulate an environment (TheWorld) where agents collect resources. There are currently two agents in the environment, which is currently a 3x3 grid. The agents have a shared policy network, which is a simple neural network with one hidden layer. The policy network's purpose is to determine the best action for each agent to take at a given state. The agents follow an epsilon-greedy exploration strategy, choosing a random action with probability epsilon and the action with the highest predicted reward with probability (1 - epsilon).
 
-The agents can take five actions: move up, move down, move left, move right, or attempt to collect a resource at their current position. When an agent collects a resource, it receives a reward of +1. The agent's objective is to collect all resources in the environment. They communicate via a shared memory that is propraged through the policy network.
+The agents can take five actions: move up, move down, move left, move right, or attempt to collect a resource at their current position. When an agent collects a resource, it receives a reward of +1 and the resource's location is stored in a share memory and propagaded via share policy net. The agent's objective is to collect all resources in the environment.
 
 
 2) Code implementation of the system, including any machine learning models or algorithms used:
