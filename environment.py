@@ -9,7 +9,6 @@ payoff_matrix = np.array([[10, 0], [0, 10]])
 class TheWorld(gym.Env):
     def __init__(self, width, height, num_agents, num_resources):
         super(TheWorld, self).__init__()
-
         self.width = width
         self.height = height
         self.num_agents = num_agents
