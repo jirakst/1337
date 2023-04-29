@@ -12,7 +12,7 @@ Agents can perform 5 actions - move in four directions (up, down, left, right) a
 I used the PyTorch library because it's more suitable for rapid prototyping, and the OpenAI Gym library for defining the environment. The main components are as follows:
 
 - TheWorld: A custom Gym environment representing the grid world in which agents operate. It defines the observation space, action space, and the dynamics of the environment.
-- Agent: A class representing a shared (individual) agent, which includes a shared policy network, a communication module, and a set of collected resources. The Agent class also provides methods for selecting actions, communicating with other agents, and updating the set of collected resources.
+- Agent: A class representing a shared (individual) agent, which includes a shared policy network and a set of collected resources. The Agent class also provides methods for selecting actions, communicating with other agents, and updating the set of collected resources.
 - Communication: A class representing the communication module of each agent, implemented as a neural network that processes the communication state and generates messages for other agents.
 - train function: A function for training the agents' shared policy network using policy gradient methods, specifically the REINFORCE algorithm.
 
