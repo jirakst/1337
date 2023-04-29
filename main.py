@@ -4,15 +4,14 @@ from environment import TheWorld, payoff_matrix
 import environment as env
 import agent
 from agent import Agent
-import numpy as np
 import nashpy
 
 def main():
+    # Define the environment
     width = 3
     height = 3
     num_agents = 2
     num_resources = 2
-    comm_output_size = 3
 
     env = TheWorld(width, height, num_agents, num_resources)
 
@@ -38,7 +37,7 @@ def main():
     agents = [Agent(shared_policy_net, env.observation_space, env.action_space, epsilon=0.6) for _ in range(num_agents)] 
 
     # Train the agents
-    agent.train(agents, shared_policy_net, env)
+    agent.train(agents, shared_policy_net, env, num_episodes=300, render_interval=10, max_steps_per_episode=5)
 
     # Evaluate against Nash Equilibrium
     def compute_nash_equilibrium(payoff_matrix):
