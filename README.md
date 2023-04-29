@@ -24,5 +24,4 @@ The agents are currently trained for 300 episodes, and the environment is render
 - Increase the maximum number of steps per episode or remove the limit entirely, allowing the agents more time to explore and collect resources.
 - Implement a more sophisticated exploration strategy, such as decaying epsilon over time to encourage more exploitation as the agents learn.
 - Use a more complex policy network architecture or other reinforcement learning algorithms (e.g., DQN, PPO) to potentially improve learning efficiency and performance.
-- Introduce a mechanism for agents to cooperate or compete, which may lead to more interesting dynamics and better performance in resource collection.
 - Experiment with different learning rate schedulers, such as StepLR, CosineAnnealingLR, or ReduceLROnPlateau, to further optimize the learning process.
