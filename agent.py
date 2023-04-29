@@ -9,7 +9,7 @@ class Agent(torch.nn.Module):
         self.policy_net = policy_net
         self.observation_space = observation_space
         self.action_space = action_space
-        self.communication = Communication(comm_input_size, comm_output_size)
+        # self.communication = Communication(comm_input_size, comm_output_size)
         self.collected_resources = set()
         # Define epsilon hyperparameter for e-greedy
         self.epsilon = epsilon  
@@ -49,7 +49,7 @@ class Agent(torch.nn.Module):
             if resource_collected:
                 reward += 1
         return reward
-    
+    '''
     def communicate(self, communication_state):
         communication_state_tensor = torch.tensor(communication_state, dtype=torch.float32).view(1, -1)
         message = self.communication(communication_state_tensor)
@@ -78,7 +78,7 @@ class Communication(nn.Module):
         x = torch.relu(self.fc1(x))
         x = torch.sigmoid(self.fc2(x))
         return x
-
+    '''
  
 def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10, max_steps_per_episode=5):
 
@@ -107,11 +107,10 @@ def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10,
 
         # Iterate until all agents meet the terminal condition
         while not all(dones):  # sum(dones) < len(agents):
-            # Sample action for each agent
             actions_timestep = []
             for i, agent in enumerate(agents):
                 if not dones[i]:
-                    agent_state = (state[0], state[1], state[2+i*2], state[3+i*2])
+                    agent_state = agent_state = (state[0], state[1], state[2+i], state[3+i])
                     agent_state_tensor = torch.tensor(agent_state, dtype=torch.float32).view(1, -1)
                     action = agent.action(agent_state_tensor)
                     actions_timestep.append(action)
@@ -142,7 +141,7 @@ def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10,
             if all([collected == len(env.resource_positions) for collected in total_collected_resources]):
                 print("All resources have been collected!")
                 break
-
+            '''
             # Get agent/resource position
             communication_states = []
             for agent_idx, agent in enumerate(agents):
@@ -152,8 +151,8 @@ def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10,
                 communication_states.append(list(communication_state))
 
             # Communicate the message between agents
-            Agent.exchange_messages(agents, communication_states)
-
+            # Agent.exchange_messages(agents, communication_states)
+            '''
             # Store state, action, and reward information for training
             states.append(state)
             actions.append(actions_timestep)

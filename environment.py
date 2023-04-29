@@ -9,11 +9,13 @@ payoff_matrix = np.array([[10, 0], [0, 10]])
 class TheWorld(gym.Env):
     def __init__(self, width, height, num_agents, num_resources):
         super(TheWorld, self).__init__()
-
         self.width = width
         self.height = height
         self.num_agents = num_agents
         self.num_resources = num_resources
+
+        # Initialize shared memory for collected resources
+        self.collected_resource_positions = np.zeros((height, width), dtype=bool)
 
         # Observation space: agent's x, y position, and a list of resources' x, y positions
         self.observation_space = spaces.Tuple([
@@ -73,6 +75,11 @@ class TheWorld(gym.Env):
             if action == 4 and self.agent_positions[i] in self.resource_positions:
                 dones[i] = True
                 print(f'\nAgent {i} finished! Resources have been sucessfully collected!')
+
+        # Update the collected_resource_positions based on the collected resources
+        for resource_idx, resource_position in enumerate(self.resource_positions):
+            if collected_resources[resource_idx]:
+                self.collected_resource_positions[resource_position] = True
 
         return self.get_full_state(), rewards, dones, infos, collected_resources
 
