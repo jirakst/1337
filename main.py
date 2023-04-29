@@ -1,5 +1,7 @@
 import torch.nn as nn
+import torch
 from environment import TheWorld, payoff_matrix
+import environment as env
 import agent
 from agent import Agent
 import numpy as np
@@ -14,20 +16,26 @@ def main():
 
     env = TheWorld(width, height, num_agents, num_resources)
 
-    # Create a shared policy network
-    shared_policy_net = nn.Sequential(
-        nn.Linear(4, 64),
-        nn.ReLU(),
-        nn.Linear(64, 64),
-        nn.ReLU(),
-        nn.Linear(64, env.action_space.n)
-    )
+    # Create the shared policy network
+    input_size = 4 
+    hidden_size = 64 
+    output_size = env.action_space.n
 
-    # TODO: Calculate the inpute size dynamically
-    comm_input_size = 2 + 2 * num_resources + 1
+    class PolicyNetwork(nn.Module):
+        def __init__(self, input_size, hidden_size, output_size, env):
+            super(PolicyNetwork, self).__init__()
+            self.fc1 = nn.Linear(input_size, hidden_size)
+            self.fc2 = nn.Linear(hidden_size, output_size)
+
+        def forward(self, x):
+            x = torch.relu(self.fc1(x))
+            x = self.fc2(x)
+            return x
+        
+    shared_policy_net = PolicyNetwork(input_size, hidden_size, output_size, env)
 
     # Create the agents
-    agents = [Agent(shared_policy_net, env.observation_space, env.action_space, comm_output_size, comm_input_size, epsilon=0.6) for _ in range(num_agents)] 
+    agents = [Agent(shared_policy_net, env.observation_space, env.action_space, comm_output_size, input_size, epsilon=0.6) for _ in range(num_agents)] 
 
     # Train the agents
     agent.train(agents, shared_policy_net, env)
