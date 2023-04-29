@@ -37,7 +37,7 @@ class Agent(torch.nn.Module):
                 reward += 1
         return reward
  
-def train(agents, shared_policy_net, env, num_episodes=5000, render_interval=10, max_steps_per_episode=5):
+def train(agents, shared_policy_net, env, num_episodes, render_interval, max_steps_per_episode):
 
     # Create the optimizer
     optimizer = optim.Adam(shared_policy_net.parameters())
