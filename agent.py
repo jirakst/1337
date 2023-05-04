@@ -135,6 +135,7 @@ def train(agents, shared_policy_net, env, num_episodes, render_interval, max_ste
                     loss = loss - torch.gather(log_probs, 1, action_tensor) * rewards_to_go[t][agent_idx]
 
         loss.backward()
+        optimizer.step() 
         scheduler.step()
         
         # Check if all resources have been collected
