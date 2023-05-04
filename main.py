@@ -1,11 +1,11 @@
 import torch.nn as nn
 import torch
-from environment import TheWorld# , payoff_matrix
-# import environment as env
+from environment import TheWorld
 import agent
 from agent import Agent
-import nashpy as nash
+# import nashpy as nash
 import numpy as np
+import pygambit as gambit
 
 def main():
     # Define the environment
@@ -63,15 +63,21 @@ def main():
         return payoff_matrix
 
     def compute_nash_equilibrium(payoff_matrix):
-        # Separate payoff matrices for each agent
-        agent1_payoff_matrix = payoff_matrix[..., 0]
-        agent2_payoff_matrix = payoff_matrix[..., 1]
+        num_agents = payoff_matrix.ndim - 1
+        num_strategies = [dim for dim in payoff_matrix.shape[:-1]]
 
         # Create the game
-        game = nash.Game(agent1_payoff_matrix, agent2_payoff_matrix)
+        game = gambit.Game.new_table(num_strategies)
+
+        # Set the payoffs
+        for index in np.ndindex(*payoff_matrix.shape[:-1]):
+            for agent in range(num_agents):
+                game[index][agent] = int(payoff_matrix[index + (agent,)])
 
         # Compute the Nash equilibria
-        equilibria = list(game.support_enumeration())
+        solver = gambit.nash.ExternalLogitSolver()
+        equilibria = solver.solve(game)
+
         return equilibria
     
     # Generate the payoff matrix for 2 players and given number of resources
@@ -80,7 +86,9 @@ def main():
     
     # Compute the Nash Equilibria
     equilibria = compute_nash_equilibrium(payoff_matrix)
-    print("Nash Equilibria:", equilibria)
+    print("Nash Equilibria:")
+    for eq in equilibria:
+        print(eq)
 
 
 if __name__ == "__main__":
