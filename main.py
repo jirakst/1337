@@ -62,25 +62,39 @@ def main():
 
         return payoff_matrix
 
-    def compute_nash_equilibrium(payoff_matrix):
-        # Separate payoff matrices for each agent
-        agent1_payoff_matrix = payoff_matrix[..., 0]
-        agent2_payoff_matrix = payoff_matrix[..., 1]
+    def is_dominated(strategy, payoffs, agent):
+        dim = payoffs.ndim - 1
+        axis = tuple(i for i in range(dim) if i != agent)
+        max_payoffs = payoffs.max(axis=axis)
+        return not np.array_equal(strategy, max_payoffs)
 
-        # Create the game
-        game = nash.Game(agent1_payoff_matrix, agent2_payoff_matrix)
+    def iterative_elimination_dominant_strategies(payoff_matrix):
+        num_agents = payoff_matrix.ndim - 1
+        remaining_strategies = [list(range(dim)) for dim in payoff_matrix.shape[:-1]]
+        changed = True
 
-        # Compute the Nash equilibria
-        equilibria = list(game.support_enumeration())
-        return equilibria
+        while changed:
+            changed = False
+
+            for agent in range(num_agents):
+                for strategy in remaining_strategies[agent]:
+                    strategy_indices = tuple(remaining_strategies[:agent] + [[strategy]] + remaining_strategies[agent + 1:])
+                    strategy_payoffs = payoff_matrix[strategy_indices].squeeze()
+
+                    if is_dominated(strategy_payoffs, strategy_payoffs, agent):
+                        remaining_strategies[agent].remove(strategy)
+                        changed = True
+
+        return remaining_strategies
     
     # Generate the payoff matrix for 2 players and given number of resources
     payoff_matrix = generate_payoff_matrix(num_resources)
     print(payoff_matrix)
     
-    # Compute the Nash Equilibria
-    equilibria = compute_nash_equilibrium(payoff_matrix)
-    print("Nash Equilibria:", equilibria)
+    # Compute the strategies after IEDS algorithm
+    remaining_strategies = iterative_elimination_dominant_strategies(payoff_matrix)
+    print("Remaining strategies:", remaining_strategies)  # !results in empty list for agent 1!
+    # TODO: Compute Nash using Gambit library
 
 
 if __name__ == "__main__":
