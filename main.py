@@ -1,10 +1,11 @@
 import torch.nn as nn
 import torch
-from environment import TheWorld, payoff_matrix
-import environment as env
+from environment import TheWorld# , payoff_matrix
+# import environment as env
 import agent
 from agent import Agent
-import nashpy
+import nashpy as nash
+import numpy as np
 
 def main():
     # Define the environment
@@ -39,12 +40,45 @@ def main():
     # Train the agents
     agent.train(agents, shared_policy_net, env, num_episodes=300, render_interval=10, max_steps_per_episode=5)
 
-    # Evaluate against Nash Equilibrium
+    # Define scalable payoff matrix
+    def generate_payoff_matrix(num_resources, num_agents=2):
+        matrix_size = num_resources + 1
+        payoff_matrix = np.zeros((matrix_size,) * num_agents + (num_agents,))
+
+        for indices in np.ndindex(*[matrix_size]*num_agents):
+            num_active_agents = sum([idx != num_resources for idx in indices])
+
+            if num_active_agents == 1:
+                agent_idx = indices.index(num_resources)
+                payoff = 10
+                payoffs = [-10] * num_agents
+                payoffs[agent_idx] = payoff
+            elif num_active_agents == 2:
+                payoffs = [5 if idx != num_resources else 0 for idx in indices]
+            else:
+                payoffs = [0] * num_agents
+
+            payoff_matrix[indices] = payoffs
+
+        return payoff_matrix
+
     def compute_nash_equilibrium(payoff_matrix):
-        game = nashpy.Game(payoff_matrix, payoff_matrix.T)
+        # Separate payoff matrices for each agent
+        agent1_payoff_matrix = payoff_matrix[..., 0]
+        agent2_payoff_matrix = payoff_matrix[..., 1]
+
+        # Create the game
+        game = nash.Game(agent1_payoff_matrix, agent2_payoff_matrix)
+
+        # Compute the Nash equilibria
         equilibria = list(game.support_enumeration())
         return equilibria
     
+    # Generate the payoff matrix for 2 players and given number of resources
+    payoff_matrix = generate_payoff_matrix(num_resources)
+    print(payoff_matrix)
+    
+    # Compute the Nash Equilibria
     equilibria = compute_nash_equilibrium(payoff_matrix)
     print("Nash Equilibria:", equilibria)
 
