@@ -22,7 +22,7 @@ def main():
     output_size = env.action_space.n
 
     class PolicyNetwork(nn.Module):
-        def __init__(self, input_size, hidden_size, output_size, env):
+        def __init__(self, input_size, hidden_size, output_size):
             super(PolicyNetwork, self).__init__()
             self.fc1 = nn.Linear(input_size, hidden_size)
             self.fc2 = nn.Linear(hidden_size, output_size)
@@ -32,7 +32,7 @@ def main():
             x = self.fc2(x)
             return x
         
-    shared_policy_net = PolicyNetwork(input_size, hidden_size, output_size, env)
+    shared_policy_net = PolicyNetwork(input_size, hidden_size, output_size)
 
     # Create the agents
     agents = [Agent(shared_policy_net, env.observation_space, env.action_space, epsilon=0.6) for _ in range(num_agents)] 
@@ -89,7 +89,7 @@ def main():
     
     # Generate the payoff matrix for 2 players and given number of resources
     payoff_matrix = generate_payoff_matrix(num_resources)
-    print(payoff_matrix)
+    # print(payoff_matrix)
     
     # Compute the strategies after IEDS algorithm
     remaining_strategies = iterative_elimination_dominant_strategies(payoff_matrix)
