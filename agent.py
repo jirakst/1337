@@ -70,7 +70,7 @@ def train(agents, shared_policy_net, env, num_episodes, render_interval, max_ste
             actions_timestep = []
             for i, agent in enumerate(agents):
                 if not dones[i]:
-                    agent_state = agent_state = (state[0], state[1], state[2+i], state[3+i])
+                    agent_state = agent_state = (state[0], state[1], state[2+i], state[3+i], env.collected_resource_positions)
                     agent_state_tensor = torch.tensor(agent_state, dtype=torch.float32).view(1, -1)
                     action = agent.action(agent_state_tensor)
                     actions_timestep.append(action)
