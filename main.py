@@ -1,10 +1,9 @@
 import torch.nn as nn
 import torch
-from environment import TheWorld# , payoff_matrix
-# import environment as env
+from environment import TheWorld
 import agent
 from agent import Agent
-import nashpy as nash
+# import nashpy as nash
 import numpy as np
 
 def main():
