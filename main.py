@@ -3,7 +3,7 @@ import torch
 from environment import TheWorld
 import agent
 from agent import Agent
-# import nashpy as nash
+import nashpy as nash
 import numpy as np
 
 def main():
@@ -42,57 +42,40 @@ def main():
     # Define scalable payoff matrix
     def generate_payoff_matrix(num_resources, num_agents=2):
         matrix_size = num_resources + 1
-        payoff_matrix = np.zeros((matrix_size,) * num_agents + (num_agents,))
+        payoff_matrix_A = np.zeros((matrix_size, matrix_size))
+        payoff_matrix_B = np.zeros((matrix_size, matrix_size))
 
-        for indices in np.ndindex(*[matrix_size]*num_agents):
-            num_active_agents = sum([idx != num_resources for idx in indices])
+        for i in range(matrix_size):
+            for j in range(matrix_size):
+                if i == num_resources and j == num_resources:
+                    payoff_A, payoff_B = 0, 0
+                elif i == num_resources:
+                    payoff_A, payoff_B = -10, 10
+                elif j == num_resources:
+                    payoff_A, payoff_B = 10, -10
+                else:
+                    payoff_A, payoff_B = 5, 5
 
-            if num_active_agents == 1:
-                agent_idx = indices.index(num_resources)
-                payoff = 10
-                payoffs = [-10] * num_agents
-                payoffs[agent_idx] = payoff
-            elif num_active_agents == 2:
-                payoffs = [5 if idx != num_resources else 0 for idx in indices]
-            else:
-                payoffs = [0] * num_agents
+                payoff_matrix_A[i, j] = payoff_A
+                payoff_matrix_B[i, j] = payoff_B
 
-            payoff_matrix[indices] = payoffs
-
-        return payoff_matrix
-
-    def is_dominated(strategy, payoffs, agent):
-        dim = payoffs.ndim - 1
-        axis = tuple(i for i in range(dim) if i != agent)
-        max_payoffs = payoffs.max(axis=axis)
-        return not np.array_equal(strategy, max_payoffs)
-
-    def iterative_elimination_dominant_strategies(payoff_matrix):
-        num_agents = payoff_matrix.ndim - 1
-        remaining_strategies = [list(range(dim)) for dim in payoff_matrix.shape[:-1]]
-        changed = True
-
-        while changed:
-            changed = False
-
-            for agent in range(num_agents):
-                for strategy in remaining_strategies[agent]:
-                    strategy_indices = tuple(remaining_strategies[:agent] + [[strategy]] + remaining_strategies[agent + 1:])
-                    strategy_payoffs = payoff_matrix[strategy_indices].squeeze()
-
-                    if is_dominated(strategy_payoffs, strategy_payoffs, agent):
-                        remaining_strategies[agent].remove(strategy)
-                        changed = True
-
-        return remaining_strategies
+        return payoff_matrix_A, payoff_matrix_B
     
     # Generate the payoff matrix for 2 players and given number of resources
-    payoff_matrix = generate_payoff_matrix(num_resources)
-    # print(payoff_matrix)
+    payoff_matrix_A, payoff_matrix_B = generate_payoff_matrix(num_resources)
+    print('\nPayoff maxtrix for agent A is:\n', payoff_matrix_A)
+    print('\nPayoff maxtrix for agent B is:\n', payoff_matrix_B)
     
-    # Compute the strategies after IEDS algorithm
-    remaining_strategies = iterative_elimination_dominant_strategies(payoff_matrix)
-    print("Remaining strategies:", remaining_strategies)  # !results in empty list for agent 1!
+    # Evaluate against Nash Equilibrium
+    def compute_nash_equilibrium(payoff_matrix_A, payoff_matrix_B):
+        game = nash.Game(payoff_matrix_A, payoff_matrix_B)
+        equilibria = list(game.support_enumeration())
+
+        return equilibria
+    
+    # Compute Nash Equilibria for 2 players
+    equilibria = compute_nash_equilibrium(payoff_matrix_A, payoff_matrix_B)
+    print("\nNash Equilibria:", equilibria)
     # TODO: Compute Nash using Gambit library
 
 
